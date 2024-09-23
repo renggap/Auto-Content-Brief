@@ -1,7 +1,16 @@
+!pip install nltk
+!python -m nltk.downloader punkt
 import requests
 from bs4 import BeautifulSoup
 import urllib.parse
 import time
+from collections import Counter
+import re
+import nltk
+from nltk.tokenize import sent_tokenize
+
+# You may need to download NLTK data for tokenization
+# nltk.download('punkt')
 
 def google_search(query, num_results=10):
     encoded_query = urllib.parse.quote(query)
@@ -30,29 +39,44 @@ def extract_content_structure(url):
         # Extract title
         title = soup.title.string if soup.title else "No title found"
 
-        # Extract headings
-        headings = [f"{tag.name}: {tag.text.strip()}" for tag in soup.find_all(['h1', 'h2', 'h3', 'h4', 'h5', 'h6'])]
+        # Extract H1, H2, H3 headings only
+        headings = [f"{tag.name}: {tag.text.strip()}" for tag in soup.find_all(['h1', 'h2', 'h3'])]
 
         # Extract meta description
         meta_description = soup.find('meta', attrs={'name': 'description'})
         meta_description = meta_description['content'] if meta_description else "No meta description found"
 
-        # Extract main content (this is a simple approach and might need refinement)
-        main_content = soup.find('main') or soup.find('article') or soup.find('div', class_='content')
+        # Extract main content (prioritize <main>)
+        main_content = soup.find('main')
         if main_content:
             paragraphs = main_content.find_all('p')
             content = "\n".join([p.text.strip() for p in paragraphs[:5]])  # Limit to first 5 paragraphs
         else:
-            content = "Could not extract main content"
+            content = "Main content section not found"
+
+        # Generate summary based on content preview
+        summary = generate_summary(content)
 
         return {
             "title": title,
             "meta_description": meta_description,
-            "headings": headings,
-            "content_preview": content
+            "headings": headings,  # Only H1, H2, H3 headings
+            "content_preview": summary  # Instead of raw content, insert the generated summary
         }
     except Exception as e:
         return {"error": str(e)}
+
+def generate_summary(content):
+    if not content or content == "Main content section not found":
+        return "No content available to summarize."
+
+    # Tokenize the content into sentences using NLTK
+    sentences = sent_tokenize(content)
+    
+    # Generate summary: take the first 2-3 sentences, which often introduce the main topic
+    summary = " ".join(sentences[:3])  # Limit to 2-3 sentences for a concise summary
+
+    return summary if summary else "Unable to generate a meaningful summary."
 
 def main():
     keyword = input("Enter the keyword to search: ")
