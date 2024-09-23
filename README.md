@@ -5,7 +5,7 @@ Copy this and run on your own notebook.
 **Changelog:**
 
 **[0.2]** 23-09-2024:
-- Prioritize <main> to extract
+- Prioritize \<main> to extract
 - Added summarizer function
 - Extract only H1, H2, and H3 for precision
 
